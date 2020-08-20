@@ -1,0 +1,17 @@
+{
+  "name": "bank_pull_2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "israeli-bank-scrapers": "^0.9.1",
+    "moment": "^2.27.0"
+  }
+}

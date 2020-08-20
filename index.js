@@ -7,32 +7,14 @@ const path = require("path");
 
 require("dotenv").config({});
 
+if (!process.env.CONFIG && process.env.LOCAL==1) {
+    let b64 = Buffer.from(fs.readFileSync(".config.json")).toString('base64');
+    process.env.CONFIG = b64;
+    console.log("Config: '" + process.env.CONFIG + "'");
+}
 
-const all_options = [
-    {
-        creds: {
-            userCode: process.env.POEL_USER,
-            password: process.env.POEL_PASS
-        },
-        options: {
-            companyId: "hapoalim",
-            showBrowser: false
-        }
-    },
-    {
-        creds: {
-            id: process.env.ISRA_ID,
-            card6Digits: process.env.ISRA_CODE,
-            password: process.env.ISRA_PASS
-        },
-        options: {
-            companyId: "isracard",
-            showBrowser: true
-        }
-    } 
-]
-
-
+const all_options =  JSON.parse(Buffer.from(process.env.CONFIG || "", 'base64').toString());
+const saveBasePath = path.resolve(process.env.SAVE_PATH)
 
 async function main() {
     let group_data = {}
@@ -62,7 +44,7 @@ async function main() {
                throw new Error(scrapeResult.errorType);
             }
         } catch(e) {
-            console.error(`scraping failed for the following reason: ${e.message}\n Full Error:\n ${e}`);
+            console.error(`scraping failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`);
         } 
         console.log("[END] scraping for site '" + element.options.companyId + "', took: "
             + timespanString(Date.now()-startDate));
@@ -76,7 +58,7 @@ async function main() {
             const group_name = group_data_array[i][0];
             const group_array = group_data_array[i][1];
             
-            let saveFolder = path.join(process.env.SAVE_PATH,group_name)
+            let saveFolder = path.join(saveBasePath,group_name)
 
             if (!fs.existsSync(saveFolder)){
                 fs.mkdirSync(saveFolder);
@@ -95,9 +77,52 @@ async function main() {
             );
         }
     } catch (e) {
-        console.error(`saving failed for the following reason: ${e.message}\n Full Error:\n ${e}`);
+        console.error(`saving failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`);
     }
     console.log("[END] saving data");
+
+
+    console.log("[START] uploading to s3");
+    try 
+    {
+        console.log("Uploading to s3...");
+        const {uploadFolder} = require("./s3-funcs");
+
+        if (fs.existsSync(saveBasePath)) {
+            await uploadFolder(saveBasePath,process.env.S3_BUCKET, "bank-scrape")
+        }
+        else {
+            console.log("Can't find any folder in '" + saveBasePath + "' !");
+        }
+
+    } catch (e) {
+        console.log("ERROR_UPLOAD_S3 " + e + ", " + JSON.stringify(e));
+    }
+    console.log("[END] uploading to s3");
 }
 
-main().then(()=>console.log("[DONE]"));
+if (process.env.LOCAL == "1") {
+    main().then(
+            ()=>console.log("[DONE]")
+        ).catch(
+            (e)=>console.log("ERROR_LOCAL " + e +"," + JSON.stringify(e))
+        )
+}
+
+exports.handler = async (event) => {
+    let result = "init";
+    try {
+        await main();
+        result = "DONE"
+    }
+    catch (e) {
+        result = "Unexpected RUNTIME ERROR " + e + "," + JSON.stringify(e);
+    }
+
+    const response = {
+        statusCode: 200,
+        body: result,
+    };
+
+    return response;
+};

@@ -29,15 +29,26 @@ function uploadFile(filepath, bucket, s3RelPath) {
     })
 }
 
+const readdirSyncRec = (p, a = []) => {
+    if (fs.statSync(p).isDirectory())
+      fs.readdirSync(p).map(f =>  readdirSyncRec(a[a.push(path.join(p, f)) - 1], a))
+    return a
+  }
+
 async function uploadFolder(folderPath,bucket, bucketPath) {
-    // - check if we get full path of relative - REL
-    var filenames = fs.readdirSync(folderPath);
+    var structure = readdirSyncRec(folderPath);
 	console.log("Found files:")
-	console.log(JSON.stringify(filenames,null,4))
-    for (let i = 0; i < filenames.length; i++) {
-        const f = filenames[i];
-        console.log("uploading '" + f + "'");
-        await uploadFile(path.join(folderPath,f),bucket,path.join(bucketPath,f))
+	console.log(JSON.stringify(structure,null,4))
+    for (let i = 0; i < structure.length; i++) {
+        const f = structure[i];
+        if (!fs.lstatSync(f).isDirectory()) {
+            console.log("uploading '" + f + "'");
+            await uploadFile(
+                f,
+                bucket,
+                path.join(bucketPath,f.replace(folderPath,"")).replace(/\\/g,'/')
+            )
+        }
     }
 }
 

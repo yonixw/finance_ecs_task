@@ -13,7 +13,7 @@ if (!process.env.CONFIG && process.env.LOCAL==1) {
     console.log("Config: '" + process.env.CONFIG + "'");
 }
 
-const all_options =  JSON.parse(Buffer.from(process.env.CONFIG || "", 'base64').toString());
+const all_options = JSON.parse(Buffer.from(process.env.CONFIG || "", 'base64').toString()) || [];
 const saveBasePath = path.resolve(process.env.SAVE_PATH)
 
 async function main() {

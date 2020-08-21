@@ -59,7 +59,7 @@ The final structure inside S3 will look like:
 ## Notes
 
 ### Delete chrome binaries
-__Remember__ to remove all local chrome installation (except `chrome-aws-lambda`) or it will be too big (>250MB) for AWS lambda.
+__Remember__ to remove all local chrome installation (except `chrome-aws-lambda`) before final zipping (after dev) or it will be too big (>250MB) for AWS lambda.
 
 
 ### Replace base-scraper-with-browser.js

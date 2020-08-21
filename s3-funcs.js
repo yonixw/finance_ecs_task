@@ -1,3 +1,4 @@
+//https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#getObject-property
 const aws = require("aws-sdk")
 const s3 = new aws.S3();
 
@@ -7,22 +8,48 @@ const path = require("path")
 function uploadFile(filepath, bucket, s3RelPath) {
     return new Promise((ok,bad)=>{
         try {
-            var options = {
+            let data = fs.readFileSync(filepath);
+
+            var options_head = {
                 Bucket: bucket,
                 Key: s3RelPath,
-                Body: fs.readFileSync(filepath)
             };
 
-            console.log("Uploading - '" + options.Bucket + "', '" + options.Key + "'")
+            s3.headObject(options_head, function(err, d) {
+                let currentSize = 0;
+                if (!err) {
+                    // We dont care if some error, might be file not exist
+                    currentSize = d.ContentLength
+                }
+
+                if (currentSize < data.length) {
+                    console.log("Uploading - '" + options_head.Bucket + "', '" + options_head.Key + "'")
         
-            s3.putObject(options, function(err, data) {
-                if (err) {
-                    bad(err);
-                } else {
-                    console.log('Successfully uploaded '+ filepath +' to ' + bucket);
+                    var options_get = {
+                        Bucket: bucket,
+                        Key: s3RelPath,
+                        Body: data
+                    };
+
+                    s3.putObject(options_get, function(err, data) {
+                        if (err) {
+                            bad(err);
+                        } else {
+                            console.log('Successfully uploaded '+ filepath +' to ' + bucket);
+                            ok();
+                        }
+                    });
+                }
+                else {
+                    console.log("Skipping upload, bigger\equal in size, '" + options_head.Bucket + "', '" + options_head.Key + "'")
                     ok();
                 }
             });
+
+
+            
+
+            
         } catch (error) {
             bad(error)
         }

@@ -61,7 +61,7 @@ async function main() {
             let saveFolder = path.join(saveBasePath,group_name)
 
             if (!fs.existsSync(saveFolder)){
-                fs.mkdirSync(saveFolder);
+                fs.mkdirSync(saveFolder, { recursive: true });
             }
 
             let savePath = path.join(saveFolder,"txns.json");

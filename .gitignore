@@ -2,3 +2,5 @@ node_modules/
 output/ 
 test_data/ 
 *.env 
+.zip 
+*.zip 

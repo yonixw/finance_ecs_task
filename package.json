@@ -10,11 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "aws-sdk": "^2.738.0",
-    "chrome-aws-lambda": "^5.2.1",
+    "aws-sdk": "^2.1183.0",
     "dotenv": "^8.2.0",
-    "israeli-bank-scrapers": "^0.9.1",
-    "moment": "^2.27.0",
-    "puppeteer-core": "^5.2.1"
+    "israeli-bank-scrapers": "^1.14.3",
+    "moment": "^2.29.0"
   }
 }

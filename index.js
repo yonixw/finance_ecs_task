@@ -119,7 +119,7 @@ async function main() {
     }
     console.log("[END] uploading to s3");
 
-    // todo - compare pairs
+    // todo - compare pairs - remember to compare duplicates also!
 }
 
 main().then(

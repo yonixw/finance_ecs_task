@@ -41,7 +41,7 @@ function convertTx(company, account, item) {
 
 function groupData(company, account, arr, group_object) {
     group_object = group_object || {};
-    my_group_object = {};
+    my_group_object = {}; // Group Key=>TXNs
 
     if (arr && arr.length && arr.length > 0) {
         arr
@@ -57,10 +57,8 @@ function groupData(company, account, arr, group_object) {
                 my_group_object[e[0]].push(e[1]);
             })
 
-        // Remove first month in data as it may miss some data.
-        //      but if we have only one month assume new account\credit-card and allow it
-        my_keys = Object.keys(my_group_object).sort();
 
+        my_keys = Object.keys(my_group_object).sort();
         my_keys.forEach(key => {
             group_object[key] = (group_object[key] || []).concat(my_group_object[key]);
         });

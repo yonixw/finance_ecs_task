@@ -7,6 +7,7 @@ const path = require("path");
 
 require("dotenv").config({});
 
+const PREV_SCAN_MONTH = 2
 
 const all_options = JSON.parse(Buffer.from(process.env.CONFIG || "", 'base64').toString()) || [];
 const saveBasePath = path.resolve(process.env.SAVE_PATH)
@@ -17,7 +18,7 @@ async function main() {
         const element = all_options[i];
 
         let fromDate = new Date();
-        fromDate.setMonth(fromDate.getMonth() - 3);
+        fromDate.setMonth(fromDate.getMonth() - PREV_SCAN_MONTH);
         fromDate.setDate(1)
         fromDate.setHours(0, 0, 0, 0)
         console.log("Searching data from: " + fromDate.toString())
@@ -28,7 +29,7 @@ async function main() {
                 showBrowser: false,
                 verbose: true,
                 startDate: fromDate,
-                futureMonthsToScrape: 1,
+                futureMonthsToScrape: 1, // Due date, not Purchase date which always <= now()
             }
         };
 
@@ -99,14 +100,15 @@ async function main() {
     }
     console.log("[END] saving data");
 
+    let comparePairs = [];
 
-    /* console.log("[START] uploading to s3");
+    console.log("[START] uploading to s3");
     try {
         console.log("Uploading to s3...");
         const { uploadFolder } = require("./s3-funcs");
 
         if (fs.existsSync(saveBasePath)) {
-            await uploadFolder(saveBasePath, process.env.S3_BUCKET, "bank-scrape")
+            comparePairs = await uploadFolder(saveBasePath, process.env.S3_BUCKET, "bank-scrape")
         }
         else {
             console.log("Can't find any folder in '" + saveBasePath + "' !");
@@ -115,7 +117,9 @@ async function main() {
     } catch (e) {
         console.log("ERROR_UPLOAD_S3 " + e + ", " + JSON.stringify(e));
     }
-    console.log("[END] uploading to s3"); */
+    console.log("[END] uploading to s3");
+
+    // todo - compare pairs
 }
 
 main().then(

@@ -16,12 +16,29 @@ async function main() {
     for (let i = 0; i < all_options.length; i++) {
         const element = all_options[i];
 
-        element.options.showBrowser = false;
+        let fromDate = new Date();
+        fromDate.setMonth(fromDate.getMonth() - 3);
+        fromDate.setDate(1)
+        fromDate.setHours(0, 0, 0, 0)
+        console.log("Searching data from: " + fromDate.toString())
 
-        let startDate = Date.now();
+        // override options
+        element.options = {
+            ...element.options, ...{
+                showBrowser: false,
+                verbose: true,
+                startDate: fromDate,
+                futureMonthsToScrape: 1,
+            }
+        };
+
+        let startRunDate = Date.now();
         console.log("[START] scraping for site '" + element.options.companyId + "'");
         try {
             const scraper = createScraper(element.options);
+            scraper.onProgress((companyId, payload) => {
+                console.log(`[PROGRESS] '${companyId}' -  ${payload.type}`);
+            });
             const scrapeResult = await scraper.scrape(element.creds);
 
             if (scrapeResult.success) {
@@ -45,10 +62,10 @@ async function main() {
             scraper.terminate();
 
         } catch (e) {
-            console.error(`scraping failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`);
+            console.error(`[ERROR-SCRAPE-FATAL] scraping failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`);
         }
         console.log("[END] scraping for site '" + element.options.companyId + "', took: "
-            + timespanString(Date.now() - startDate));
+            + timespanString(Date.now() - startRunDate));
     }
 
     console.log("[START] saving data");

@@ -55,3 +55,19 @@ The final structure inside S3 will look like:
 ├───2019-11
 │     ├  txns.json
 ```
+
+### IAM S3
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "VisualEditor0",
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:GetObject"],
+      "Resource": "arn:aws:s3:::BUCKET/*"
+    }
+  ]
+}
+```

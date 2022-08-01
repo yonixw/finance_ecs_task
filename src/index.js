@@ -26,10 +26,6 @@ async function main() {
         for (let i = 0; i < all_options.length; i++) {
             const element = all_options[i];
 
-            if (element.options.companyId == "hapoalim") {
-                continue // TODO debug
-            }
-
             let fromDate = new Date();
             fromDate.setMonth(fromDate.getMonth() - PREV_SCAN_MONTH);
             fromDate.setDate(1)

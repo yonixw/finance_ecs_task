@@ -44,6 +44,7 @@ async function main() {
             const scrapeResult = await scraper.scrape(element.creds);
 
             if (scrapeResult.success) {
+                console.log("[SUCESS] Got " + account.txns.length + " txn!");
                 scrapeResult.accounts.forEach((account) => {
                     console.log(`found ${account.txns.length} transactions for account number 
                   ${account.accountNumber}`);

@@ -1,4 +1,6 @@
 
+const { deltaTxnObj } = require("./diff_txtns")
+
 const mockCompanies = [
     {
         "company": "isracard",
@@ -33,7 +35,7 @@ function mockTxn(id, companyID, dateID, shopID, cost, costRealMul = 1, status = 
         "basic": {
             "date": mockDates[dateID],
             "cost": -1 * cost,
-            "type": "ILS",
+            "type": costRealMul > 1 ? "ILS+EXT" : "ILS",
             "info": mockShops[shopID]
         },
         "extra": {
@@ -50,17 +52,61 @@ function mockTxn(id, companyID, dateID, shopID, cost, costRealMul = 1, status = 
 
 describe('diff txn', () => {
 
-    const obj_1_A = [
-        mockTxn(4540797, 0, 1, 0, 83.9),
-        mockTxn(4540798, 0, 1, 1, 83.9),
-    ]
+    test('simple add/rem', () => {
 
-    const diff = mockTxn(4540799, 0, 1, 2, 83);
+        const obj_1_A = [
+            mockTxn(4540797, 0, 1, 0, 83.9),
+            mockTxn(4540798, 0, 1, 1, 83.9),
+        ]
 
-    const obj_1_B = obj_1_A.concat(diff)
+        const diff = [mockTxn(4540799, 0, 1, 2, 83)]
 
-    test('simple add', () => {
+        const obj_1_B = obj_1_A.concat(diff)
+
         expect(obj_1_A.length).toBe(obj_1_B.length - 1);
 
+        // Check symmetry
+        expect(deltaTxnObj(obj_1_A, obj_1_B)).toEqual(diff)
+        expect(deltaTxnObj(obj_1_B, obj_1_A)).toEqual(diff)
+    })
+
+    test('uniqe in each', () => {
+
+        const base = [mockTxn(4540797, 0, 1, 0, 83.9)]
+        const obj_1_A = base.concat([mockTxn(4540798, 0, 1, 1, 70)])
+        const obj_1_B = base.concat([mockTxn(4540798, 0, 1, 1, 75)])
+
+        const diff = [mockTxn(4540798, 0, 1, 1, 70), mockTxn(4540798, 0, 1, 1, 75)]
+
+        // Check symmetry
+        expect(deltaTxnObj(obj_1_A, obj_1_B)).toEqual(diff)
+        expect(deltaTxnObj(obj_1_B, obj_1_A)).toEqual(diff.reverse())
+    })
+
+    test('repeated+1', () => {
+
+        const base = [mockTxn(4540797, 0, 1, 0, 83.9)]
+        const obj_1_A = base.concat(base).concat(base).concat(base)
+        const obj_1_B = base.concat(base).concat(base).concat(base).concat(base)
+
+        const diff = base
+
+        // Check symmetry
+        expect(deltaTxnObj(obj_1_A, obj_1_B)).toEqual(diff)
+        expect(deltaTxnObj(obj_1_B, obj_1_A)).toEqual(diff)
+    })
+
+    test('repeated+2', () => {
+
+        const base = [mockTxn(4540797, 0, 1, 0, 83.9)]
+        const obj_1_A = base.concat(base).concat(base).concat(base)
+        const obj_1_B = base.concat(base).concat(base).concat(base).concat(base).concat(base)
+
+        // report diff once even if duplication is +2
+        const diff = base
+
+        // Check symmetry
+        expect(deltaTxnObj(obj_1_A, obj_1_B)).toEqual(diff)
+        expect(deltaTxnObj(obj_1_B, obj_1_A)).toEqual(diff)
     })
 })

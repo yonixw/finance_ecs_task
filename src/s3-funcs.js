@@ -12,7 +12,8 @@ async function uploadFileIfBigger(filepath, bucket, s3RelPath) {
     let diffResult = [];
 
 
-    let newReportData = fs.readFileSync(filepath);
+    let newReportDataBuffer = fs.readFileSync(filepath);
+    let newReport = JSON.parse(newReportDataBuffer.toString("utf-8"))
 
     var options_get = {
         Bucket: bucket,
@@ -26,12 +27,12 @@ async function uploadFileIfBigger(filepath, bucket, s3RelPath) {
         currentSize = getResult.ContentLength;
         let oldReportData = JSON.parse(getResult.Body.toString('utf-8'))
 
-        diffResult = deltaTxnObj(oldReportData, newReportData);
+        diffResult = deltaTxnObj(oldReportData, newReport);
 
     } catch (error) {
         // We dont care if file not exist
-        if (error.code === 'NotFound') {
-            diffResult = [].concat(JSON.parse(newReportData));
+        if (error.code === 'NotFound' || error.code === "AccessDenied") {
+            diffResult = [].concat(newReport);
         }
         else {
             //rethrow
@@ -51,7 +52,7 @@ async function uploadFileIfBigger(filepath, bucket, s3RelPath) {
     var options_put = {
         Bucket: bucket,
         Key: s3RelPath,
-        Body: newReportData
+        Body: newReportDataBuffer
     };
 
     await s3.putObject(options_put).promise();

@@ -129,20 +129,22 @@ async function main() {
         const { uploadFolder } = require("./s3-funcs");
 
         if (fs.existsSync(saveBasePath)) {
-            diffsTXNs = await uploadFolder(saveBasePath, process.env.S3_BUCKET, "bank-scrape")
+            diffsTXNs = await uploadFolder(saveBasePath, process.env.S3_BUCKET, process.env.S3_FOLDER || "bank-scrape")
         }
         else {
             console.log("Can't find any folder in '" + saveBasePath + "' !");
         }
 
     } catch (e) {
-        console.error("[ERROR_UPLOAD_S3] " + e + ", " + JSON.stringify(e));
+        console.error("[ERROR_UPLOAD_S3] " + e + ", " + JSON.stringify(e), e);
     }
     console.log("[END] uploading to s3");
 
 
 
-    console.log(`[DIFF] found ${diffsTXNs} diffs`)
+    console.log(`[DIFF] found ${diffsTXNs.length} diffs`)
+
+    console.log(JSON.stringify(diffsTXNs, null, 4)) // debug
 }
 
 main().then(

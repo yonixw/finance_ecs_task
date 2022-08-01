@@ -1,6 +1,6 @@
 node_modules/ 
 output/ 
-test_data/ 
+reports/ 
 *.env 
 .zip 
 *.zip 

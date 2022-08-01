@@ -2,63 +2,61 @@
 const aws = require("aws-sdk")
 const s3 = new aws.S3();
 
+const util = require('util')
 const fs = require('fs')
-const path = require("path")
+const path = require('path')
 
-function uploadFileIfBigger(filepath, bucket, s3RelPath) {
-    return new Promise((ok, bad) => {
-        try {
-            let data = fs.readFileSync(filepath);
+const { deltaTxnObj } = require("./diff_txtns")
 
-            var options_head = {
-                Bucket: bucket,
-                Key: s3RelPath,
-            };
+async function uploadFileIfBigger(filepath, bucket, s3RelPath) {
+    let diffResult = [];
 
-            console.log(`Pre-Upload - check '${options_head.Key}'`)
-            s3.headObject(options_head, function (err, result) {
-                let currentSize = 0;
-                if (!err || err.code === 'NotFound') {
-                    // We dont care if file not exist
-                    currentSize = result.ContentLength
-                }
-                else {
-                    bad(err);
-                }
 
-                /*
-                 Only update locally bigger files
-                 We assume that "PREV_SCAN_MONTH" back:
-                    * It is completed updating txns
-                    * It will not miss too old txns (in case provider may truncate days and not months from old)
-                */
-                if (currentSize < data.length) {
-                    console.log("Uploading - '" + options_head.Bucket + "', '" + options_head.Key + "'")
+    let newReportData = fs.readFileSync(filepath);
 
-                    var options_put = {
-                        Bucket: bucket,
-                        Key: s3RelPath,
-                        Body: data
-                    };
+    var options_get = {
+        Bucket: bucket,
+        Key: s3RelPath,
+    };
 
-                    s3.putObject(options_put, function (err, data) {
-                        if (err) {
-                            bad(err);
-                        } else {
-                            console.log('Successfully uploaded ' + filepath + ' to ' + bucket);
-                            ok(true);
-                        }
-                    });
-                }
-                else {
-                    console.log("Skipping upload, bigger\equal in size, '" + options_head.Bucket + "', '" + options_head.Key + "'")
-                    ok(false);
-                }
-            });
-        } catch (error) {
-            bad(error)
+    console.log(`Pre-Upload - get '${options_get.Key}'`)
+    let currentSize = 0;
+    try {
+        let getResult = await s3.getObject(options_get).promise();
+        currentSize = getResult.ContentLength;
+        let oldReportData = JSON.parse(getResult.Body.toString('utf-8'))
+
+        diffResult = deltaTxnObj(oldReportData, newReportData);
+
+    } catch (error) {
+        // We dont care if file not exist
+        if (error.code === 'NotFound') {
+            diffResult = [].concat(JSON.parse(newReportData));
         }
-    })
+        else {
+            //rethrow
+            throw error;
+        }
+    }
+
+    /*
+    Only update locally bigger files
+    We assume that "PREV_SCAN_MONTH" back:
+    * It is completed updating txns
+    * It will not miss too old txns (in case provider may truncate days and not months from old)
+    */
+
+    console.log("Uploading - '" + options_get.Bucket + "', '" + options_get.Key + "'")
+
+    var options_put = {
+        Bucket: bucket,
+        Key: s3RelPath,
+        Body: newReportData
+    };
+
+    await s3.putObject(options_put).promise();
+    console.log('Successfully uploaded ' + filepath + ' to ' + bucket);
+    return diffResult;
 }
 
 const readdirSyncRec = (p, a = []) => {
@@ -68,7 +66,7 @@ const readdirSyncRec = (p, a = []) => {
 }
 
 async function uploadFolder(folderPath, bucket, bucketPath) {
-    let toCompare = []
+    let diffs = []
     var structure = readdirSyncRec(folderPath);
     console.log("Found files:")
     console.log(JSON.stringify(structure, null, 4))
@@ -78,17 +76,15 @@ async function uploadFolder(folderPath, bucket, bucketPath) {
             console.log("Processing '" + f + "'");
             const localFullPath = f
             const s3FileFullPath = path.join(bucketPath, f.replace(folderPath, "")).replace(/\\/g, '/');
-            const isBigger = await uploadFileIfBigger(
+            const fileDiffs = await uploadFileIfBigger(
                 localFullPath,
                 bucket,
                 s3FileFullPath
             )
-            if (isBigger) {
-                toCompare.push([localFullPath, s3FileFullPath])
-            }
+            diffs = diffs.concat(fileDiffs)
         }
     }
-    return toCompare;
+    return diffs;
 }
 
 function getFileCount(downloadPath) {

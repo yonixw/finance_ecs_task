@@ -21,105 +21,107 @@ process.on('uncaughtException', error => {
 });
 
 async function main() {
-    let group_data = {}
-    for (let i = 0; i < all_options.length; i++) {
-        const element = all_options[i];
+    if (process.env.SKIP_DOWNLOAD !== '1') {
+        let group_data = {}
+        for (let i = 0; i < all_options.length; i++) {
+            const element = all_options[i];
 
-        if (element.options.companyId == "hapoalim") {
-            continue // TODO debug
-        }
-
-        let fromDate = new Date();
-        fromDate.setMonth(fromDate.getMonth() - PREV_SCAN_MONTH);
-        fromDate.setDate(1)
-        fromDate.setHours(0, 0, 0, 0)
-        console.log("Searching data from: " + fromDate.toString())
-
-        // override options
-        element.options = {
-            ...element.options, ...{
-                args: ['--no-sandbox'],
-                showBrowser: false,
-                verbose: true,
-                startDate: fromDate,
-                futureMonthsToScrape: 1, // Due date, not Purchase date which always <= now()
+            if (element.options.companyId == "hapoalim") {
+                continue // TODO debug
             }
-        };
 
-        let startRunDate = Date.now();
-        console.log("[START] scraping for site '" + element.options.companyId + "'");
-        try {
-            const scraper = createScraper(element.options);
-            scraper.onProgress((companyId, payload) => {
-                console.log(`[PROGRESS] '${companyId}' -  ${payload.type}`);
-            });
-            const scrapeResult = await scraper.scrape(element.creds);
+            let fromDate = new Date();
+            fromDate.setMonth(fromDate.getMonth() - PREV_SCAN_MONTH);
+            fromDate.setDate(1)
+            fromDate.setHours(0, 0, 0, 0)
+            console.log("Searching data from: " + fromDate.toString())
 
-            if (scrapeResult.success) {
-                scrapeResult.accounts.forEach((account) => {
-                    console.log(`[SUCESS] found ${account.txns.length} transactions for account number 
+            // override options
+            element.options = {
+                ...element.options, ...{
+                    args: ['--no-sandbox'],
+                    showBrowser: false,
+                    verbose: true,
+                    startDate: fromDate,
+                    futureMonthsToScrape: 1, // Due date, not Purchase date which always <= now()
+                }
+            };
+
+            let startRunDate = Date.now();
+            console.log("[START] scraping for site '" + element.options.companyId + "'");
+            try {
+                const scraper = createScraper(element.options);
+                scraper.onProgress((companyId, payload) => {
+                    console.log(`[PROGRESS] '${companyId}' -  ${payload.type}`);
+                });
+                const scrapeResult = await scraper.scrape(element.creds);
+
+                if (scrapeResult.success) {
+                    scrapeResult.accounts.forEach((account) => {
+                        console.log(`[SUCESS] found ${account.txns.length} transactions for account number 
                   ${account.accountNumber}`);
 
-                    console.log("Grouping data...")
-                    groupData(
-                        element.options.companyId,
-                        account.accountNumber,
-                        account.txns,
-                        group_data)
-                });
-            }
-            else {
-                // TODO - slack hook
-                console.error("[ERROR-SCRAPE-LOGIC]", scrapeResult.errorType)
+                        console.log("Grouping data...")
+                        groupData(
+                            element.options.companyId,
+                            account.accountNumber,
+                            account.txns,
+                            group_data)
+                    });
+                }
+                else {
+                    // TODO - slack hook
+                    console.error("[ERROR-SCRAPE-LOGIC]", scrapeResult.errorType)
+
+                    // Stop process. Need all to work!
+                    process.exit(1);
+                }
+
+                scraper.terminate();
+
+            } catch (e) {
+                console.error(`[ERROR-SCRAPE-FATAL] scraping failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`);
 
                 // Stop process. Need all to work!
                 process.exit(1);
             }
-
-            scraper.terminate();
-
-        } catch (e) {
-            console.error(`[ERROR-SCRAPE-FATAL] scraping failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`);
-
-            // Stop process. Need all to work!
-            process.exit(1);
+            console.log("[END] scraping for site '" + element.options.companyId + "', took: "
+                + timespanString(Date.now() - startRunDate));
         }
-        console.log("[END] scraping for site '" + element.options.companyId + "', took: "
-            + timespanString(Date.now() - startRunDate));
-    }
 
-    console.log("[START] saving data");
-    try {
-        const group_data_array = toKVArray(group_data);
+        console.log("[START] saving data");
+        try {
+            const group_data_array = toKVArray(group_data);
 
-        for (let i = 0; i < group_data_array.length; i++) {
-            const group_name = group_data_array[i][0];
-            const group_array = group_data_array[i][1];
+            for (let i = 0; i < group_data_array.length; i++) {
+                const group_name = group_data_array[i][0];
+                const group_array = group_data_array[i][1];
 
-            let saveFolder = path.join(saveBasePath, group_name)
+                let saveFolder = path.join(saveBasePath, group_name)
 
-            if (!fs.existsSync(saveFolder)) {
-                fs.mkdirSync(saveFolder, { recursive: true });
+                if (!fs.existsSync(saveFolder)) {
+                    fs.mkdirSync(saveFolder, { recursive: true });
+                }
+
+                let savePath = path.join(saveFolder, "txns.json");
+                let dataToSave = JSON.stringify(group_array);
+
+                console.log(
+                    "Saving '" + group_name + "' to '" + savePath +
+                    "', Count: " + group_array.length +
+                    ", KB:" + Math.round(dataToSave.length / 1024));
+                fs.writeFileSync(
+                    savePath,
+                    dataToSave
+                );
             }
-
-            let savePath = path.join(saveFolder, "txns.json");
-            let dataToSave = JSON.stringify(group_array);
-
-            console.log(
-                "Saving '" + group_name + "' to '" + savePath +
-                "', Count: " + group_array.length +
-                ", KB:" + Math.round(dataToSave.length / 1024));
-            fs.writeFileSync(
-                savePath,
-                dataToSave
-            );
+        } catch (e) {
+            console.error(`saving failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`);
         }
-    } catch (e) {
-        console.error(`saving failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`);
+        console.log("[END] saving data");
     }
-    console.log("[END] saving data");
 
-    let comparePairs = [];
+    let diffsTXNs = [];
 
     console.log("[START] uploading to s3");
     try {
@@ -127,7 +129,7 @@ async function main() {
         const { uploadFolder } = require("./s3-funcs");
 
         if (fs.existsSync(saveBasePath)) {
-            comparePairs = await uploadFolder(saveBasePath, process.env.S3_BUCKET, "bank-scrape")
+            diffsTXNs = await uploadFolder(saveBasePath, process.env.S3_BUCKET, "bank-scrape")
         }
         else {
             console.log("Can't find any folder in '" + saveBasePath + "' !");
@@ -139,7 +141,8 @@ async function main() {
     console.log("[END] uploading to s3");
 
 
-    // todo - compare pairs - remember to compare duplicates also!
+
+    console.log(`[DIFF] found ${diffsTXNs} diffs`)
 }
 
 main().then(

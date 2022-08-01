@@ -2,7 +2,7 @@ version: '3'
 
 services:
   main:
-    image: yonixw/finance_ecs_task
+    image: yonixw/finance_ecs_task:v1
     build:
       context: .
     volumes:

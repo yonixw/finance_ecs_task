@@ -26,6 +26,7 @@ async function main() {
         // override options
         element.options = {
             ...element.options, ...{
+                args: ['--no-sandbox'],
                 showBrowser: false,
                 verbose: true,
                 startDate: fromDate,

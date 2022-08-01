@@ -103,22 +103,23 @@ async function main() {
 
     let comparePairs = [];
 
-    console.log("[START] uploading to s3");
-    try {
-        console.log("Uploading to s3...");
-        const { uploadFolder } = require("./s3-funcs");
-
-        if (fs.existsSync(saveBasePath)) {
-            comparePairs = await uploadFolder(saveBasePath, process.env.S3_BUCKET, "bank-scrape")
-        }
-        else {
-            console.log("Can't find any folder in '" + saveBasePath + "' !");
-        }
-
-    } catch (e) {
-        console.log("ERROR_UPLOAD_S3 " + e + ", " + JSON.stringify(e));
-    }
-    console.log("[END] uploading to s3");
+    /*  console.log("[START] uploading to s3");
+     try {
+         console.log("Uploading to s3...");
+         const { uploadFolder } = require("./s3-funcs");
+ 
+         if (fs.existsSync(saveBasePath)) {
+             comparePairs = await uploadFolder(saveBasePath, process.env.S3_BUCKET, "bank-scrape")
+         }
+         else {
+             console.log("Can't find any folder in '" + saveBasePath + "' !");
+         }
+ 
+     } catch (e) {
+         console.log("ERROR_UPLOAD_S3 " + e + ", " + JSON.stringify(e));
+     }
+     console.log("[END] uploading to s3");
+  */
 
     // todo - compare pairs - remember to compare duplicates also!
 }

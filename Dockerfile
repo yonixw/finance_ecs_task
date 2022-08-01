@@ -21,5 +21,5 @@ CMD yarn start
 #### Source
 
 COPY package.json .
-RUN yarn install
+RUN yarn install --prod
 COPY . . 

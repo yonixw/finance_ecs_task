@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start":"node src/index.js"
+    "start": "node src/index.js",
+    "test":"jest"
   },
   "keywords": [],
   "author": "",
@@ -14,5 +15,8 @@
     "dotenv": "^8.2.0",
     "israeli-bank-scrapers": "^1.14.3",
     "moment": "^2.29.0"
+  },
+  "devDependencies": {
+    "jest": "^28.1.3"
   }
 }

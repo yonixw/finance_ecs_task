@@ -7,9 +7,6 @@ S3_BUCKET=<bucket name (no url)>
 SAVE_PATH=/tmp/bank-info/
 
 CONFIG=<Base64 of the json config, see below>
-
-# For local dev:
-LOCAL=1
 ```
 
 ## Config

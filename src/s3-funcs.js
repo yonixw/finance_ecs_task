@@ -15,11 +15,15 @@ function uploadFileIfBigger(filepath, bucket, s3RelPath) {
                 Key: s3RelPath,
             };
 
+            console.log(`Pre-Upload - check '${options_head.Key}'`)
             s3.headObject(options_head, function (err, result) {
                 let currentSize = 0;
-                if (!err) {
-                    // We dont care if some error, might be file not exist
+                if (!err || err.code === 'NotFound') {
+                    // We dont care if file not exist
                     currentSize = result.ContentLength
+                }
+                else {
+                    bad(err);
                 }
 
                 /*
@@ -31,13 +35,13 @@ function uploadFileIfBigger(filepath, bucket, s3RelPath) {
                 if (currentSize < data.length) {
                     console.log("Uploading - '" + options_head.Bucket + "', '" + options_head.Key + "'")
 
-                    var options_get = {
+                    var options_put = {
                         Bucket: bucket,
                         Key: s3RelPath,
                         Body: data
                     };
 
-                    s3.putObject(options_get, function (err, data) {
+                    s3.putObject(options_put, function (err, data) {
                         if (err) {
                             bad(err);
                         } else {
@@ -71,7 +75,7 @@ async function uploadFolder(folderPath, bucket, bucketPath) {
     for (let i = 0; i < structure.length; i++) {
         const f = structure[i];
         if (!fs.lstatSync(f).isDirectory()) {
-            console.log("uploading '" + f + "'");
+            console.log("Processing '" + f + "'");
             const localFullPath = f
             const s3FileFullPath = path.join(bucketPath, f.replace(folderPath, "")).replace(/\\/g, '/');
             const isBigger = await uploadFileIfBigger(

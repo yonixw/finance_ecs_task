@@ -8,7 +8,7 @@ const mockCompanies = [
     },
     {
         "company": "hapoalim",
-        "account": "00-123456-123"
+        "account": "00-123-123777"
     }
 ]
 
@@ -26,7 +26,8 @@ const mockDates = [
 const mockShops = [
     "Store A",
     "חנות א",
-    "'בחנות ב"
+    "'בחנות ב",
+    "דירקט- מצטבר"
 ]
 
 function mockTxn(id, companyID, dateID, shopID, cost, costRealMul = 1, status = "completed") {

@@ -12,10 +12,22 @@ const PREV_SCAN_MONTH = 2
 const all_options = JSON.parse(Buffer.from(process.env.CONFIG || "", 'base64').toString()) || [];
 const saveBasePath = path.resolve(process.env.SAVE_PATH)
 
+process.on('unhandledRejection', error => {
+    console.error('*** unhandledRejection', error);
+});
+
+process.on('uncaughtException', error => {
+    console.error('*** uncaughtException', error);
+});
+
 async function main() {
     let group_data = {}
     for (let i = 0; i < all_options.length; i++) {
         const element = all_options[i];
+
+        if (element.options.companyId == "hapoalim") {
+            continue // TODO debug
+        }
 
         let fromDate = new Date();
         fromDate.setMonth(fromDate.getMonth() - PREV_SCAN_MONTH);
@@ -44,9 +56,8 @@ async function main() {
             const scrapeResult = await scraper.scrape(element.creds);
 
             if (scrapeResult.success) {
-                console.log("[SUCESS] Got " + account.txns.length + " txn!");
                 scrapeResult.accounts.forEach((account) => {
-                    console.log(`found ${account.txns.length} transactions for account number 
+                    console.log(`[SUCESS] found ${account.txns.length} transactions for account number 
                   ${account.accountNumber}`);
 
                     console.log("Grouping data...")
@@ -60,12 +71,18 @@ async function main() {
             else {
                 // TODO - slack hook
                 console.error("[ERROR-SCRAPE-LOGIC]", scrapeResult.errorType)
+
+                // Stop process. Need all to work!
+                process.exit(1);
             }
 
             scraper.terminate();
 
         } catch (e) {
             console.error(`[ERROR-SCRAPE-FATAL] scraping failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`);
+
+            // Stop process. Need all to work!
+            process.exit(1);
         }
         console.log("[END] scraping for site '" + element.options.companyId + "', took: "
             + timespanString(Date.now() - startRunDate));
@@ -104,23 +121,23 @@ async function main() {
 
     let comparePairs = [];
 
-    /*  console.log("[START] uploading to s3");
-     try {
-         console.log("Uploading to s3...");
-         const { uploadFolder } = require("./s3-funcs");
- 
-         if (fs.existsSync(saveBasePath)) {
-             comparePairs = await uploadFolder(saveBasePath, process.env.S3_BUCKET, "bank-scrape")
-         }
-         else {
-             console.log("Can't find any folder in '" + saveBasePath + "' !");
-         }
- 
-     } catch (e) {
-         console.log("ERROR_UPLOAD_S3 " + e + ", " + JSON.stringify(e));
-     }
-     console.log("[END] uploading to s3");
-  */
+    console.log("[START] uploading to s3");
+    try {
+        console.log("Uploading to s3...");
+        const { uploadFolder } = require("./s3-funcs");
+
+        if (fs.existsSync(saveBasePath)) {
+            comparePairs = await uploadFolder(saveBasePath, process.env.S3_BUCKET, "bank-scrape")
+        }
+        else {
+            console.log("Can't find any folder in '" + saveBasePath + "' !");
+        }
+
+    } catch (e) {
+        console.error("[ERROR_UPLOAD_S3] " + e + ", " + JSON.stringify(e));
+    }
+    console.log("[END] uploading to s3");
+
 
     // todo - compare pairs - remember to compare duplicates also!
 }
@@ -128,5 +145,5 @@ async function main() {
 main().then(
     () => console.log("[DONE]")
 ).catch(
-    (e) => console.log("ERROR_LOCAL " + e + "," + JSON.stringify(e))
+    (e) => console.error("ERROR_LOCAL " + e + "," + JSON.stringify(e))
 )

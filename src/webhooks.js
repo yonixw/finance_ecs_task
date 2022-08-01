@@ -13,7 +13,7 @@ function webhookDiffs(diff) {
     if (!url) return;
 
     const body = {
-        diff
+        diff, event
     }
     postAsync(event, url, body);
 }
@@ -24,7 +24,7 @@ function webhookFileResult(name, txns) {
     if (!url) return;
 
     const body = {
-        name, txns
+        name, txns, event
     }
     postAsync(event, url, body);
 }
@@ -37,7 +37,7 @@ function webhookError(err) {
     if (!url) return;
 
     const body = {
-        "errormsg": `${err}`
+        "errormsg": `${err}`, event
     }
     postAsync(event, url, body);
 }
@@ -51,7 +51,7 @@ async function webhookErrorWait(err) {
     if (!url) return;
 
     const body = {
-        "errormsg": `${err}`
+        "errormsg": `${err}`, event
     }
     await postWait(event, url, body);
 }

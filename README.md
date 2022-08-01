@@ -1,13 +1,4 @@
-# Finance Lambda.
-
-## Environment used
-
-```bash
-S3_BUCKET=<bucket name (no url)>
-SAVE_PATH=/tmp/bank-info/
-
-CONFIG=<Base64 of the json config, see below>
-```
+# Finance Task.
 
 ## Config
 
@@ -21,8 +12,7 @@ Example of the structure for `CONFIG` environment variable before base64 transfo
       "password": "??????"
     },
     "options": {
-      "companyId": "hapoalim",
-      "showBrowser": false
+      "companyId": "hapoalim"
     }
   },
   {
@@ -32,11 +22,36 @@ Example of the structure for `CONFIG` environment variable before base64 transfo
       "password": "??????"
     },
     "options": {
-      "companyId": "isracard",
-      "showBrowser": false
+      "companyId": "isracard"
     }
   }
 ]
+```
+
+## Environment Format
+
+`.env` file example:
+
+```bash
+CONFIG=0000000FFFFFFFFFF # base64(JSON.stringify(creds_array))
+SAVE_PATH=/tmp/ # in the docker
+
+#SKIP_DOWNLOAD=1 # For developing
+
+# S3 for saving latests version and to get diffs
+S3_BUCKET=aws_s3_bucket
+S3_FOLDER=bucker_folder # like a prefix
+
+# webhooks for customiztions (Slack, Telegram, Google docs etc.)
+# see src/webhooks.js for format
+WEBHOOK_ERROR=https://requestbin.io/xxxxxxxxx
+WEBHOOK_DIFF=https://requestbin.io/xxxxxxxxxx
+WEBHOOK_RESULT=https://requestbin.io/xxxxxxxx # See results below
+
+# Optional (aws sdk can take from few places)
+# See IAM policy below
+AWS_ACCESS_KEY_ID=AXXXX
+AWS_SECRET_ACCESS_KEY=XXX/YYY/ZZZ
 ```
 
 ## Results

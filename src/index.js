@@ -4,6 +4,7 @@ const { toKVArray, groupData } = require("./group_data")
 
 const fs = require("fs");
 const path = require("path");
+const { webhookDiffs, webhookErrorWait, webhookError } = require('./webhooks');
 
 require("dotenv").config({});
 
@@ -19,6 +20,8 @@ process.on('unhandledRejection', error => {
 process.on('uncaughtException', error => {
     console.error('*** uncaughtException', error);
 });
+
+const sleepSec = (sec) => new Promise((ok, _) => setTimeout(ok, 1000 * sec))
 
 async function main() {
     if (process.env.SKIP_DOWNLOAD !== '1') {
@@ -66,9 +69,7 @@ async function main() {
                     });
                 }
                 else {
-                    // TODO - slack hook
-                    console.error("[ERROR-SCRAPE-LOGIC]", scrapeResult.errorType)
-
+                    await webhookErrorWait(`[ERROR-SCRAPE-LOGIC] - ${element.options?.companyId} - ${scrapeResult.errorType}`)
                     // Stop process. Need all to work!
                     process.exit(1);
                 }
@@ -76,7 +77,7 @@ async function main() {
                 scraper.terminate();
 
             } catch (e) {
-                console.error(`[ERROR-SCRAPE-FATAL] scraping failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`);
+                await webhookErrorWait(`[ERROR-SCRAPE-FATAL] - ${element.options?.companyId} - scraping failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`)
 
                 // Stop process. Need all to work!
                 process.exit(1);
@@ -112,7 +113,7 @@ async function main() {
                 );
             }
         } catch (e) {
-            console.error(`saving failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`);
+            await webhookErrorWait(`saving failed for the following reason: ${e.message}\n Full Error:\n ${JSON.stringify(e)}`);
         }
         console.log("[END] saving data");
     }
@@ -132,19 +133,19 @@ async function main() {
         }
 
     } catch (e) {
-        console.error("[ERROR_UPLOAD_S3] " + e + ", " + JSON.stringify(e), e);
+        await webhookErrorWait("[ERROR_UPLOAD_S3] " + e + ", " + JSON.stringify(e), e);
     }
     console.log("[END] uploading to s3");
 
 
-
     console.log(`[DIFF] found ${diffsTXNs.length} diffs`)
+    webhookDiffs(diffsTXNs)
 
-    console.log(JSON.stringify(diffsTXNs, null, 4)) // debug
+    await sleepSec(30); // Wait for all webhooks to complete
 }
 
 main().then(
     () => console.log("[DONE]")
 ).catch(
-    (e) => console.error("ERROR_LOCAL " + e + "," + JSON.stringify(e))
+    (e) => webhookError("ERROR_LOCAL " + e + "," + JSON.stringify(e))
 )

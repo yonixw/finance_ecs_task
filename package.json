@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/index.js",
-    "test":"jest"
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -14,7 +14,8 @@
     "aws-sdk": "^2.1183.0",
     "dotenv": "^8.2.0",
     "israeli-bank-scrapers": "^1.14.3",
-    "moment": "^2.29.0"
+    "moment": "^2.29.0",
+    "node-fetch": "2.6.7"
   },
   "devDependencies": {
     "jest": "^28.1.3"

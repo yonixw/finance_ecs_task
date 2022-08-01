@@ -6,7 +6,8 @@ const util = require('util')
 const fs = require('fs')
 const path = require('path')
 
-const { deltaTxnObj } = require("./diff_txtns")
+const { deltaTxnObj } = require("./diff_txtns");
+const { webhookFileResult } = require("./webhooks");
 
 async function uploadFileIfBigger(filepath, bucket, s3RelPath) {
     let diffResult = [];
@@ -14,6 +15,8 @@ async function uploadFileIfBigger(filepath, bucket, s3RelPath) {
 
     let newReportDataBuffer = fs.readFileSync(filepath);
     let newReport = JSON.parse(newReportDataBuffer.toString("utf-8"))
+
+    webhookFileResult(s3RelPath, newReport);
 
     var options_get = {
         Bucket: bucket,

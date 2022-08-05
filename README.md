@@ -71,6 +71,30 @@ The final structure inside S3 will look like:
 │     ├  txns.json
 ```
 
+The format was chosen to make basic consistent across companies with extra optional:
+```json
+    {
+      "company": "isracard",
+      "account": "1234",
+      "basic": {
+        "date": "2022-08-04T00:00:00.000Z",
+        "cost": 5.4,
+        "type": "ILS+EXT",
+        "info": "דירקט"
+      },
+      "extra": {
+        "type": "normal",
+        "identifier": 1234,
+        "processedDate": "2022-08-04T00:00:00.000Z",
+        "originalAmount": -18.4,
+        "originalCurrency": "ILS",
+        "status": "pending",
+        "memo": ""
+      }
+    }
+]
+```
+
 ### IAM S3
 
 ```json

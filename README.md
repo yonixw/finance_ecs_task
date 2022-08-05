@@ -73,6 +73,7 @@ The final structure inside S3 will look like:
 
 The format was chosen to make basic consistent across companies with extra optional:
 ```json
+[
     {
       "company": "isracard",
       "account": "1234",

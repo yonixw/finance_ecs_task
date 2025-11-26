@@ -9,13 +9,13 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "aws-sdk": "^2.1183.0",
-    "dotenv": "^8.2.0",
-    "israeli-bank-scrapers": "^1.14.3",
-    "moment": "^2.29.0",
-    "node-fetch": "2.6.7"
+    "aws-sdk": "^2",
+    "dotenv": "^17.2",
+    "israeli-bank-scrapers": "^6.3",
+    "moment": "^2.30",
+    "node-fetch": "^2"
   },
   "devDependencies": {
     "jest": "^28.1.3"

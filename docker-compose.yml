@@ -1,11 +1,10 @@
-version: '3'
+version: "3"
 
 services:
   main:
-    image: yonixw/finance_ecs_task:v1
+    image: yonixw/finance_ecs_task:26NOV2025
     build:
       context: .
     volumes:
       - ./reports:/tmp/save
-    env_file: ./.env
-    
+    env_file: .env
